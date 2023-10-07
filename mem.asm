@@ -76,3 +76,53 @@ memcmp:
     xor eax, eax
 .done:
     ret
+; rax memchr(rdi, rsi, rdx);
+; void* memchr(const void* b1, int val, size_t count);
+global memchr
+memchr:
+    ; move rdx into rcx (the count so that repne can use it as a count)
+    mov rcx, rdx
+    ; move rdx into rcx (the count so that rep can use it as a count)
+    mov rax, rsi
+    repne scasb
+    je .found
+
+    ; not found, return null pointer
+    xor rax, rax
+    jmp .done
+.found:
+    ; decrement the point so it points to the byte which was found
+    dec rdi
+    mov rax, rdi
+.done:
+    ret
+
+; rax memrchr(rdi, rsi, rdx);
+; void* memrchr(const void* b1, int val, size_t count);
+global memrchr
+memrchr:
+    ; move rdx into rcx (the count so that repne can use it as a count)
+    mov rcx, rdx
+    ; move rdx into rcx (the count so that rep can use it as a count)
+    mov rax, rsi
+
+    ; point to the end of the block
+    lea rdi, [rdi + rdx - 1]
+
+    ; change the direction flag to decrement
+    std
+    ; scan the string
+    repne scasb
+    je .found
+
+    ; not found, return null pointer
+    xor rax, rax
+    jmp .done
+.found:
+    ; decrement the point so it points to the byte which was found
+    inc rdi
+    mov rax, rdi
+.done:
+    ; reset the decrement flag and return
+    cld
+    ret
